@@ -110,6 +110,12 @@ function onItemSendHandler(event) {
     }
 }
 
+function displayAddresses (recipients) {
+    for (let i = 0; i < recipients.length; i++) {
+        write(recipients[i].emailAddress);
+    }
+}
+
 function write(message) {
     console.log(message);
 }
