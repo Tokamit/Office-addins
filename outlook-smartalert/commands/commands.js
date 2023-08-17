@@ -50,7 +50,7 @@ function onItemSendHandler(event) {
         }
         let domains =[];
 
-        displayAddresses(asyncResult.value);
+        displayAddresses(asyncResult.value);//STUFF
         getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
         
         recipients['cc'].getAsync(
@@ -61,24 +61,37 @@ function onItemSendHandler(event) {
                 event.completed({ allowEvent: false, errorMessage: "Failed to Check CC",});
                 return;
             }
-            displayAddresses(asyncResult.value);
+            displayAddresses(asyncResult.value);//STUFF
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-            console.log(domains);
+
+            if (recipients['bcc'].length > 0) {
+                recipients['bcc'].getAsync(
+                { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+                (asyncResult) => {
+                    let event = asyncResult.asyncContext.callingEvent;
+                    if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                        event.completed({ allowEvent: false, errorMessage: "Failed to Check BCC",});
+                        return;
+                    }
+                    displayAddresses(asyncResult.value);//STUFF
+                    getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+                    diplayMessageBoxExternalDomain(event,domains);
+                });
+            } else {
+                diplayMessageBoxExternalDomain(event,domains);
+            }
         });
     });
 
-    if (recipients['bcc'].length > 0) {
-        recipients['bcc'].getAsync((asyncResult) => {
-            if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                write(asyncResult.error.message);
-                return;
-            }
-            displayAddresses(asyncResult.value);
-        });
-    } else {
-        console.log("Recipients in the Bcc field: None");
-    }
+    
 
+}
+
+function diplayMessageBoxExternalDomain(event,domains){
+    let udomains = [...new Set(domains)];
+    console.log(udomains);
+    //check domain
+    event.completed({ allowEvent: false, errorMessage: "This mail send to External Domain",});
 }
 
 function getRecipiensDomain(recipients){
@@ -86,8 +99,7 @@ function getRecipiensDomain(recipients){
     recipients.forEach((recipient) => {
         values.push(recipient.emailAddress.split('@').pop());
     });
-    let uvalues = [...new Set(values)];
-    return uvalues;
+    return values;
 }
 
 function displayAddresses (recipients) {
