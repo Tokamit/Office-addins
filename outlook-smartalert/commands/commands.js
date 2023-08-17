@@ -34,6 +34,7 @@ function onItemSendHandler(event) {
     if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
         recipients['to'] = item.requiredAttendees;
         recipients['cc'] = item.optionalAttendees;
+        recipients['bcc'] = [];
     } else {
         recipients['to'] = item.to;
         recipients['cc'] = item.cc;
