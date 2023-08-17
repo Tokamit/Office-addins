@@ -67,66 +67,51 @@ function onItemComposeHandler(event) {
     }
   );
 }
-
-/**
- * Handle the OnMessageSend or OnAppointmentSend event by verifying that applicable color categories are
- * applied to a new message or appointment before it's sent.
- * @param {Office.AddinCommands.Event} event The OnMessageSend or OnAppointmentSend event object.
- */
 function onItemSendHandler(event) {
-  Office.context.mailbox.item.subject.getAsync(
-    { asyncContext: event },
-    (asyncResult) => {
-      let event = asyncResult.asyncContext;
+    let toRecipients, ccRecipients, bccRecipients;
+    item = Office.context.mailbox.item;
 
-      if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-        console.log(asyncResult.error.message);
-        event.completed({
-          allowEvent: false,
-          errorMessage: "Failed to check the subject for keywords.",
-        });
-        return;
-      }
-
-      let subject = asyncResult.value;
-      let detectedWords = [];
-      if (subject) {
-        detectedWords = checkForKeywords(KEYWORDS, subject);
-      }
-
-      let options = {
-        asyncContext: { callingEvent: event, keywordArray: detectedWords },
-      };
-      Office.context.mailbox.item.body.getAsync(
-        "text",
-        options,
-        (asyncResult) => {
-          let event = asyncResult.asyncContext.callingEvent;
-
-          if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            console.log(asyncResult.error.message);
-            event.completed({
-              allowEvent: false,
-              errorMessage: "Failed to check the body for keywords.",
-            });
-            return;
-          }
-
-          let body = asyncResult.value;
-          let detectedWords = asyncResult.asyncContext.keywordArray;
-          if (body) {
-            detectedWords = checkForKeywords(KEYWORDS, body, detectedWords);
-          }
-
-          if (detectedWords.length > 0) {
-            checkAppliedCategories(event, detectedWords);
-          } else {
-            event.completed({ allowEvent: true });
-          }
-        }
-      );
+    if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
+      toRecipients = item.requiredAttendees;
+      ccRecipients = item.optionalAttendees;
+    } else {
+      toRecipients = item.to;
+      ccRecipients = item.cc;
+      bccRecipients = item.bcc;
     }
-  );
+
+    toRecipients.getAsync((asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            write(asyncResult.error.message);
+            return;
+        }
+        write(`Recipients in the To or Required field: ${displayAddresses(asyncResult.value)}`);
+    });
+
+    ccRecipients.getAsync((asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            write(asyncResult.error.message);
+            return;
+        }
+        write(`Recipients in the Cc or Optional field: ${displayAddresses(asyncResult.value)}`);
+    });
+
+    if (bccRecipients.length > 0) {
+        bccRecipients.getAsync((asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            write(asyncResult.error.message);
+            return;
+        }
+
+        write(`Recipients in the Bcc field: ${displayAddresses(asyncResult.value)}`);
+        });
+    } else {
+        write("Recipients in the Bcc field: None");
+    }
+}
+
+function write(message) {
+    console.log(message);
 }
 
 /**
