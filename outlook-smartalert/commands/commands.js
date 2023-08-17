@@ -29,42 +29,47 @@ function onItemComposeHandler(event) {
 /**
  */
 function onItemSendHandler(event) {
-    let toRecipients, ccRecipients, bccRecipients;
+    let recipients = {};
     let item = Office.context.mailbox.item;
 
     if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
-        toRecipients = item.requiredAttendees;
-        ccRecipients = item.optionalAttendees;
+        recipients['to'] = item.requiredAttendees;
+        recipients['cc'] = item.optionalAttendees;
     } else {
-        toRecipients = item.to;
-        ccRecipients = item.cc;
-        bccRecipients = item.bcc;
+        recipients['to'] = item.to;
+        recipients['cc'] = item.cc;
+        recipients['bcc'] = item.bcc;
     }
 
-    toRecipients.getAsync(
-        { asyncContext: { callingEvent: event } },
+    recipients['to'].getAsync(
+    { asyncContext: { callingEvent: event, recipients: recipients } },
+    (asyncResult) => {
+        let event = asyncResult.asyncContext.callingEvent;
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            event.completed({ allowEvent: false, errorMessage: "Failed to Check To",});
+            return;
+        }
+        let domains =[];
+
+        displayAddresses(asyncResult.value);
+        domains.push(getRecipiensDomain(asyncResult.value));
+        
+        recipients['cc'].getAsync(
+        { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
         (asyncResult) => {
             let event = asyncResult.asyncContext.callingEvent;
-            let domains =[];
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                event.completed({ allowEvent: false, errorMessage: "Failed to configure categories.",});
+                event.completed({ allowEvent: false, errorMessage: "Failed to Check CC",});
                 return;
             }
             displayAddresses(asyncResult.value);
             domains.push(getRecipiensDomain(asyncResult.value));
-            console.log(domains)
+            console.log(domains);
+        });
     });
 
-    ccRecipients.getAsync((asyncResult) => {
-        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            write(asyncResult.error.message);
-            return;
-        }
-        displayAddresses(asyncResult.value);
-    });
-
-    if (bccRecipients.length > 0) {
-        bccRecipients.getAsync((asyncResult) => {
+    if (recipients['bcc'].length > 0) {
+        recipients['bcc'].getAsync((asyncResult) => {
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
                 write(asyncResult.error.message);
                 return;
@@ -76,7 +81,6 @@ function onItemSendHandler(event) {
     }
 
 }
-
 function getRecipiensDomain(recipients){
     let values = [];
     recipients.forEach((recipient) => {
