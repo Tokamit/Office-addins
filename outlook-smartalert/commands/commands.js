@@ -52,7 +52,7 @@ function onItemSendHandler(event) {
         let domains =[];
 
         displayAddresses(asyncResult.value);
-        domains.push(getRecipiensDomain(asyncResult.value));
+        getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
         
         recipients['cc'].getAsync(
         { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
@@ -63,7 +63,7 @@ function onItemSendHandler(event) {
                 return;
             }
             displayAddresses(asyncResult.value);
-            domains.push(getRecipiensDomain(asyncResult.value));
+            getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
             console.log(domains);
         });
     });
@@ -81,12 +81,14 @@ function onItemSendHandler(event) {
     }
 
 }
+
 function getRecipiensDomain(recipients){
     let values = [];
     recipients.forEach((recipient) => {
         values.push(recipient.emailAddress);
     });
-    return values;
+    let uvalues = [...new Set(values)];
+    return uvalues;
 }
 
 function displayAddresses (recipients) {
