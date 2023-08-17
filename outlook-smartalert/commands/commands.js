@@ -4,6 +4,16 @@
 
 Office.onReady();
 
+/**
+ */
+ const KEYWORDS = [
+  "sales",
+  "expense reports",
+  "legal",
+  "marketing",
+  "performance reviews",
+];
+
 const TOKGRDOMAINS = [
     "tok.co.jp", 
     "tokamerica.com", 
@@ -15,23 +25,18 @@ const TOKGRDOMAINS = [
     "tokgroup.onmicrosoft.com"
 ];
 
-let _recipients = [];
 
 /**
  */
 function onItemComposeHandler(event) {
-    console.log("event compose");
+    console.log("email compose");
     event.completed({ allowEvent: true });
 }
 
 /**
  */
 function onItemSendHandler(event) {
-    let item, itemDomains;
-    item = Office.context.mailbox.item;
-
     let toRecipients, ccRecipients, bccRecipients;
-    let recipients;
 
     if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
         toRecipients = item.requiredAttendees;
@@ -42,29 +47,59 @@ function onItemSendHandler(event) {
         bccRecipients = item.bcc;
     }
 
-    toRecipients.getAsync((asyncResult) => {
+    toRecipients.getAsync(
+        { asyncContext: { callingEvent: event } },
+        (asyncResult) => {
+            let event = asyncResult.asyncContext.callingEvent;
+            let domains =[];
+            if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                event.completed({ allowEvent: false, errorMessage: "Failed to configure categories.",});
+                return;
+            }
+            domains.push(getRecipiensDomain(asyncResult.value));
+            console.log(domains)
+    });
+
+    ccRecipients.getAsync((asyncResult) => {
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
             write(asyncResult.error.message);
             return;
         }
-        _recipients += asyncResult.value;
+        write(`Recipients in the Cc or Optional field: ${displayAddresses(asyncResult.value)}`);
     });
 
-    displayAddresses(_recipients);
-
-    event.completed({
-        allowEvent: false,
-        errorMessage: "test",
-      });
+    if (bccRecipients.length > 0) {
+        bccRecipients.getAsync((asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            write(asyncResult.error.message);
+            return;
+        }
+        write(`Recipients in the Bcc field: ${displayAddresses(asyncResult.value)}`);
+        });
+    } else {
+        write("Recipients in the Bcc field: None");
+    }
 
 }
 
+function getRecipiensDomain(recipients){
+    let values = [];
+    recipients.forEach((recipient) => {
+        values.push(recipient.emailAddress);
+    });
+    return values;
+}
 
 function displayAddresses (recipients) {
-    for (let i = 0; i < recipients.length; i++) {
-        write(recipients[i].emailAddress);
-    }
+    recipients.forEach((recipient) => {
+        console.log(recipient.emailAddress);
+    });
 }
-function write(message) {
-    console.log(message);
-}
+
+
+
+Office.actions.associate("onMessageComposeHandler", onItemComposeHandler);
+Office.actions.associate("onAppointmentComposeHandler", onItemComposeHandler);
+Office.actions.associate("onMessageSendHandler", onItemSendHandler);
+Office.actions.associate("onAppointmentSendHandler", onItemSendHandler);
+
