@@ -6,7 +6,6 @@ Office.onReady();
 
 /**
  */
-
 const TOKGRDOMAINS = [
     "tok.co.jp", 
     "tokamerica.com", 
@@ -77,7 +76,7 @@ function onItemSendHandler(event) {
             displayAddresses(asyncResult.value);
         });
     } else {
-        write("Recipients in the Bcc field: None");
+        console.log("Recipients in the Bcc field: None");
     }
 
 }
@@ -85,7 +84,7 @@ function onItemSendHandler(event) {
 function getRecipiensDomain(recipients){
     let values = [];
     recipients.forEach((recipient) => {
-        values.push(recipient.emailAddress);
+        values.push(recipient.emailAddress.split('@').pop());
     });
     let uvalues = [...new Set(values)];
     return uvalues;
