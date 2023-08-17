@@ -6,13 +6,6 @@ Office.onReady();
 
 /**
  */
- const KEYWORDS = [
-  "sales",
-  "expense reports",
-  "legal",
-  "marketing",
-  "performance reviews",
-];
 
 const TOKGRDOMAINS = [
     "tok.co.jp", 
@@ -37,6 +30,7 @@ function onItemComposeHandler(event) {
  */
 function onItemSendHandler(event) {
     let toRecipients, ccRecipients, bccRecipients;
+    let item = Office.context.mailbox.item;
 
     if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
         toRecipients = item.requiredAttendees;
@@ -56,6 +50,7 @@ function onItemSendHandler(event) {
                 event.completed({ allowEvent: false, errorMessage: "Failed to configure categories.",});
                 return;
             }
+            displayAddresses(asyncResult.value);
             domains.push(getRecipiensDomain(asyncResult.value));
             console.log(domains)
     });
@@ -65,16 +60,16 @@ function onItemSendHandler(event) {
             write(asyncResult.error.message);
             return;
         }
-        write(`Recipients in the Cc or Optional field: ${displayAddresses(asyncResult.value)}`);
+        displayAddresses(asyncResult.value);
     });
 
     if (bccRecipients.length > 0) {
         bccRecipients.getAsync((asyncResult) => {
-        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            write(asyncResult.error.message);
-            return;
-        }
-        write(`Recipients in the Bcc field: ${displayAddresses(asyncResult.value)}`);
+            if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                write(asyncResult.error.message);
+                return;
+            }
+            displayAddresses(asyncResult.value);
         });
     } else {
         write("Recipients in the Bcc field: None");
@@ -102,4 +97,3 @@ Office.actions.associate("onMessageComposeHandler", onItemComposeHandler);
 Office.actions.associate("onAppointmentComposeHandler", onItemComposeHandler);
 Office.actions.associate("onMessageSendHandler", onItemSendHandler);
 Office.actions.associate("onAppointmentSendHandler", onItemSendHandler);
-
