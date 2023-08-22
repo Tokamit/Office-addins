@@ -92,7 +92,7 @@ function diplayMessageBoxExternalDomain(event,domains){
     let udomains = [...new Set(domains)];
     console.log(udomains);
     //check domain
-    event.completed({ allowEvent: false, errorMessage: "This mail send to External Domain",});
+    event.completed({ allowEvent: false, errorMessage: "This mail send to External Domain\ntest line2",});
     //event.completed({ allowEvent: true});
 }
 
