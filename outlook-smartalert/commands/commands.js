@@ -20,15 +20,15 @@ const TOKGRDOMAINS = [
 /**
  */
 const i18n = {
-    'ko-kr' : {
+    'ko-KR' : {
         faildToCheck : '수신자 확인을 실패하였습니다. =>',
         sendToExternal : '이 메일은 사외로 송신됩니다.',
     },
-    'en-us' : {
+    'en-US' : {
         aildToCheck : 'Failed to Check',
         sendToExternal : 'This mail send to External Domain',
     },
-    'ja-jp' : {
+    'ja-JP' : {
         aildToCheck : 'Failed to Check',
         sendToExternal : 'This mail send to External Domain',
     }
@@ -113,7 +113,7 @@ function diplayMessageBoxExternalDomain(event,domains){
     let udomains = [...new Set(domains)];
     let diff = udomains.filter(x => !TOKGRDOMAINS.includes(x));
     if (diff.length > 0){
-        event.completed({ allowEvent: false, errorMessage: `test\n${diff.join("\n")}`,});
+        event.completed({ allowEvent: false, errorMessage: `${i18n[Office.context.displayLanguage].sendToExternal}\n${diff.join("\n")}`,});
     } else {
         event.completed({ allowEvent: true});
     }
