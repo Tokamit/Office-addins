@@ -106,10 +106,14 @@ function onItemSendHandler(event) {
 }
 
 function diplayMessageBoxExternalDomain(event,domains){
+    console.log(Office.context.displayLanguage);
+    console.log(i18n[Office.context.displayLanguage]);
+
+    
     let udomains = [...new Set(domains)];
     let diff = udomains.filter(x => !TOKGRDOMAINS.includes(x));
     if (diff.length > 0){
-        event.completed({ allowEvent: false, errorMessage: `${i18n[Office.context.displayLanguage].sendToExternal}\n${diff.join("\n")}`,});
+        event.completed({ allowEvent: false, errorMessage: `test\n${diff.join("\n")}`,});
     } else {
         event.completed({ allowEvent: true});
     }
