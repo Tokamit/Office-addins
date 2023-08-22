@@ -1,12 +1,15 @@
 /*
  * Copyright (c) TOKAM
+ * Outlook Add-in External Domain Alert
+ * v1.0 initialize
  */
 
 Office.onReady();
 
 /**
+ * whitelist domains
  */
-const TOKGRDOMAINS = [
+const WLDOMAINS = [
     "tok.co.jp", 
     "tokamerica.com", 
     "tokam.co.kr", 
@@ -18,33 +21,40 @@ const TOKGRDOMAINS = [
 ];
 
 /**
+ * i18n
+ * base on Office.context.displayLanguage
+ * Refer https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
  */
 const i18n = {
     'ko-KR' : {
         faildToCheck : '수신자 확인을 실패하였습니다. =>',
-        sendToExternal : '이 메일은 사외로 송신됩니다.',
+        sendToExternal : '이 메일은 사외로 송신됩니다. 다음의 외부도메인을 확인해주세요',
     },
     'en-US' : {
-        aildToCheck : 'Failed to Check',
-        sendToExternal : 'This mail send to External Domain',
+        aildToCheck : 'Failed to Check Recipients. =>',
+        sendToExternal : 'This mail send to External Domain. Please check to follow external domains.',
     },
     'ja-JP' : {
-        aildToCheck : 'Failed to Check',
-        sendToExternal : 'This mail send to External Domain',
+        aildToCheck : '宛先確認に失敗しました。=>',
+        sendToExternal : '本メールは社外へ送信されます。次の外部ドメインを確認してください。',
     }
 };
 
+let l10n = null;
 
 /**
+ * create new mail or appointment
  */
 function onItemComposeHandler(event) {
-    console.log("email compose");
+    setl10n();
     event.completed({ allowEvent: true });
 }
 
 /**
+ * send to mail or appointment
  */
 function onItemSendHandler(event) {
+    setl10n();
     let recipients = {};
     let item = Office.context.mailbox.item;
 
@@ -57,41 +67,44 @@ function onItemSendHandler(event) {
         recipients['cc'] = item.cc;
         recipients['bcc'] = item.bcc;
     }
+    console.log(recipients);
 
     recipients['to'].getAsync(
     { asyncContext: { callingEvent: event, recipients: recipients } },
     (asyncResult) => {
+        //check to
         let event = asyncResult.asyncContext.callingEvent;
+        let domains = [];
+
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            event.completed({ allowEvent: false, errorMessage: "Failed to Check To",});
+            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} To`,});
             return;
         }
-        let domains =[];
-
-        displayAddresses(asyncResult.value);//STUFF
+        
         getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
         
         recipients['cc'].getAsync(
         { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
         (asyncResult) => {
+            //check cc
             let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                event.completed({ allowEvent: false, errorMessage: "Failed to Check CC",});
+                event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
                 return;
             }
-            displayAddresses(asyncResult.value);//STUFF
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-
+            console.log("bcc count");
+            console.log(recipients['bcc'].length);
             if (recipients['bcc'].length > 0) {
                 recipients['bcc'].getAsync(
                 { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
                 (asyncResult) => {
+                    //check bcc
                     let event = asyncResult.asyncContext.callingEvent;
                     if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                        event.completed({ allowEvent: false, errorMessage: "Failed to Check BCC",});
+                        event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} BCC`,});
                         return;
                     }
-                    displayAddresses(asyncResult.value);//STUFF
                     getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
                     diplayMessageBoxExternalDomain(event,domains);
                 });
@@ -100,41 +113,30 @@ function onItemSendHandler(event) {
             }
         });
     });
-
-    
-
+}
+/**
+ */
+function setl10n(){
+    l10n = i18n[Office.context.displayLanguage]===undefined ? i18n['en-US'] : i18n[Office.context.displayLanguage];
 }
 
+/**
+ */
 function diplayMessageBoxExternalDomain(event,domains){
-    console.log(Office.context.displayLanguage);
-    console.log(i18n[Office.context.displayLanguage]);
-
-    
-    let udomains = [...new Set(domains)];
-    let diff = udomains.filter(x => !TOKGRDOMAINS.includes(x));
-    if (diff.length > 0){
-        event.completed({ allowEvent: false, errorMessage: `${i18n[Office.context.displayLanguage].sendToExternal}\n${diff.join("\n")}`,});
-    } else {
-        event.completed({ allowEvent: true});
-    }
+    let diff = [...new Set(domains)].filter(e => !WLDOMAINS.includes(e));
+    let param = diff.length > 0 ? { allowEvent: false, errorMessage: `${l10n.sendToExternal}\n${diff.join("\n")}`,} : { allowEvent: true};
+    event.completed(param);
 }
 
+/**
+ */
 function getRecipiensDomain(recipients){
-    let values = [];
-    recipients.forEach((recipient) => {
-        values.push(recipient.emailAddress.split('@').pop());
-    });
-    return values;
+    return recipients.map(e => e.split('@').pop());
 }
 
-function displayAddresses (recipients) {
-    recipients.forEach((recipient) => {
-        console.log(recipient.emailAddress);
-    });
-}
-
-
-
+/**
+ * event handler bind for outlook application
+ */
 Office.actions.associate("onMessageComposeHandler", onItemComposeHandler);
 Office.actions.associate("onAppointmentComposeHandler", onItemComposeHandler);
 Office.actions.associate("onMessageSendHandler", onItemSendHandler);
