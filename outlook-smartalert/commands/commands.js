@@ -90,10 +90,12 @@ function onItemSendHandler(event) {
 
 function diplayMessageBoxExternalDomain(event,domains){
     let udomains = [...new Set(domains)];
-    console.log(udomains);
-    //check domain
-    event.completed({ allowEvent: false, errorMessage: "This mail send to External Domain\ntest line2",});
-    //event.completed({ allowEvent: true});
+    let diff = udomains.filter(x => !TOKGRDOMAINS.includes(x));
+    if (diff.length > 0){
+        event.completed({ allowEvent: false, errorMessage: `This mail send to External Domain\n${diff.join("\n")}`,});
+    } else {
+        event.completed({ allowEvent: true});
+    }
 }
 
 function getRecipiensDomain(recipients){
