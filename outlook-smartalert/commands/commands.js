@@ -2,6 +2,8 @@
  * Copyright (c) TOKAM
  * Outlook Add-in External Domain Alert
  * v1.0 initialize
+ * v1.1 i18n
+ * v1.2 normal to arrow func
  */
 
 Office.onReady();
@@ -68,30 +70,47 @@ function onItemSendHandler(event) {
         recipients['bcc'] = item.bcc;
     }
 
-    let options ={
-        asyncContext: { callingEvent: event, recipients: recipients, domains:domains  },
-        properties: ['to','cc','bcc'],
-    }
-
-    item.getAsync(
-        options,
+    // ===== begin of to async ===== //
+    recipients['to'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains  } },
+    (asyncResult) => {
+        let event = asyncResult.asyncContext.callingEvent;
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
+            return;
+        }
+        getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+        // ===== begin of cc async ===== //
+        recipients['cc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
         (asyncResult) => {
+            let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
                 event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
                 return;
             }
-            let to = asyncResult.value.to || [];
-            let cc = asyncResult.value.cc || [];
-            let bcc = asyncResult.value.bcc || [];
-            let rps = to.concat(cc,bcc);
-            console.log(rps);
-        }
-    )
+            getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+            if (recipients['bcc']) {
+                // ===== begin of bcc async ===== //
+                recipients['bcc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+                (asyncResult) => {
+                    let event = asyncResult.asyncContext.callingEvent;
+                    if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                        event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} BCC`,});
+                        return;
+                    }
+                    getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+                    diplayMessageBoxExternalDomain(event,domains);
+                }); // ===== end of bcc async ===== //
+            } else {
+                diplayMessageBoxExternalDomain(event,domains);
+            }
+        });// ===== end of cc async ===== //
+    }); // ===== end of to async ===== //
 }
+
 /**
  */
 function setl10n(){
-    l10n = i18n[Office.context.displayLanguage]===undefined ? i18n['en-US'] : i18n[Office.context.displayLanguage];
+    l10n = i18n[Office.context.displayLanguage] ?? i18n['en-US']
 }
 
 /**
