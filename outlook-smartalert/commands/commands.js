@@ -68,44 +68,26 @@ function onItemSendHandler(event) {
         recipients['bcc'] = item.bcc;
     }
 
-    // ===== begin of to async ===== //
-    recipients['to'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains  } },
-    (asyncResult) => {
-        let event = asyncResult.asyncContext.callingEvent;
-        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
-            return;
-        }
-        getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-        // ===== begin of cc async ===== //
-        recipients['cc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+    let options ={
+        asyncContext: { callingEvent: event, recipients: recipients, domains:domains  },
+        properties: ['to','cc','bcc'],
+    }
+
+    item.getAsync(
+        options,
         (asyncResult) => {
-            let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
                 event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
                 return;
             }
-            getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-            if (recipients['bcc']) {
-                // ===== begin of bcc async ===== //
-                recipients['bcc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
-                (asyncResult) => {
-                    //check bcc
-                    let event = asyncResult.asyncContext.callingEvent;
-                    if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                        event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} BCC`,});
-                        return;
-                    }
-                    getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-                    diplayMessageBoxExternalDomain(event,domains);
-                }); // ===== end of bcc async ===== //
-            } else {
-                diplayMessageBoxExternalDomain(event,domains);
-            }
-        });// ===== end of cc async ===== //
-    }); // ===== end of to async ===== //
+            let to = asyncResult.value.to || [];
+            let cc = asyncResult.value.cc || [];
+            let bcc = asyncResult.value.bcc || [];
+            let rps = to.concat(cc,bcc);
+            console.log(rps);
+        }
+    )
 }
-
 /**
  */
 function setl10n(){
