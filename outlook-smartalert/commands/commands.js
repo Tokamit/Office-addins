@@ -56,53 +56,39 @@ function onItemComposeHandler(event) {
 function onItemSendHandler(event) {
     setl10n();
     let recipients = {};
+    let domains = [];
     let item = Office.context.mailbox.item;
 
     if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
         recipients['to'] = item.requiredAttendees;
         recipients['cc'] = item.optionalAttendees;
-        recipients['bcc'] = [];
     } else {
         recipients['to'] = item.to;
         recipients['cc'] = item.cc;
         recipients['bcc'] = item.bcc;
     }
-    console.log('bcc');
-    console.log(recipients['bcc']);
 
-    //STUFF
-    console.log('getTest start');
-    console.log(getTest());
-
-    recipients['to'].getAsync(
-    { asyncContext: { callingEvent: event, recipients: recipients } },
+    // ===== begin of to async ===== //
+    recipients['to'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains  } },
     (asyncResult) => {
-        //check to
         let event = asyncResult.asyncContext.callingEvent;
-        let domains = [];
-
         if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} To`,});
+            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
             return;
         }
-        
         getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-        
-        recipients['cc'].getAsync(
-        { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+        // ===== begin of cc async ===== //
+        recipients['cc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
         (asyncResult) => {
-            //check cc
             let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
                 event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
                 return;
             }
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-            console.log("bcc count");
-            console.log(recipients['bcc'].length);
-            if (recipients['bcc'].length > 0) {
-                recipients['bcc'].getAsync(
-                { asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+            if (recipients['bcc']) {
+                // ===== begin of bcc async ===== //
+                recipients['bcc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
                 (asyncResult) => {
                     //check bcc
                     let event = asyncResult.asyncContext.callingEvent;
@@ -112,28 +98,13 @@ function onItemSendHandler(event) {
                     }
                     getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
                     diplayMessageBoxExternalDomain(event,domains);
-                });
+                }); // ===== end of bcc async ===== //
             } else {
                 diplayMessageBoxExternalDomain(event,domains);
             }
-        });
-    });
+        });// ===== end of cc async ===== //
+    }); // ===== end of to async ===== //
 }
-
-function getTest() {
-    return new OfficeExtension.Promise(function (resolve, reject) {
-        try {
-            Office.context.mailbox.item.to.getAsync(function (asyncResult) {
-                resolve(asyncResult.value);
-            });
-        }
-        catch (error) {
-            reject(error);
-        }
-    })
-}
-
-
 
 /**
  */
