@@ -69,6 +69,9 @@ function onItemSendHandler(event) {
     }
     console.log(recipients);
 
+    //STUFF
+    console.log(getTest);
+
     recipients['to'].getAsync(
     { asyncContext: { callingEvent: event, recipients: recipients } },
     (asyncResult) => {
@@ -114,6 +117,22 @@ function onItemSendHandler(event) {
         });
     });
 }
+
+function getTest() {
+    return new OfficeExtension.Promise(function (resolve, reject) {
+        try {
+            Office.context.mailbox.item.to.getAsync(function (asyncResult) {
+                resolve(asyncResult.value);
+            });
+        }
+        catch (error) {
+            reject(error);
+        }
+    })
+}
+
+
+
 /**
  */
 function setl10n(){
