@@ -33,11 +33,11 @@ const i18n = {
         sendToExternal : '이 메일은 사외로 송신됩니다. 다음의 외부도메인을 확인해주세요',
     },
     'en-US' : {
-        aildToCheck : 'Failed to Check Recipients. =>',
+        faildToCheck : 'Failed to Check Recipients. =>',
         sendToExternal : 'This mail send to External Domain. Please check to follow external domains.',
     },
     'ja-JP' : {
-        aildToCheck : '宛先確認に失敗しました。=>',
+        faildToCheck : '宛先確認に失敗しました。=>',
         sendToExternal : '本メールは社外へ送信されます。次の外部ドメインを確認してください。',
     }
 };
