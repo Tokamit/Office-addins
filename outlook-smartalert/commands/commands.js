@@ -67,10 +67,12 @@ function onItemSendHandler(event) {
         recipients['cc'] = item.cc;
         recipients['bcc'] = item.bcc;
     }
-    console.log(recipients);
+    console.log('bcc');
+    console.log(recipients['bcc']);
 
     //STUFF
-    console.log(getTest);
+    console.log('getTest start');
+    console.log(getTest());
 
     recipients['to'].getAsync(
     { asyncContext: { callingEvent: event, recipients: recipients } },
