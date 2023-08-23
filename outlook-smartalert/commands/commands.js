@@ -132,6 +132,7 @@ function diplayMessageBoxExternalDomain(event,domains){
  */
 function getRecipiensDomain(recipients){
     console.log('getrecipentsdomain');
+    recipients.forEach(e=>{console.log(e)});
     console.log(recipients);
     return recipients.map(e => e.split('@').pop());
 }
