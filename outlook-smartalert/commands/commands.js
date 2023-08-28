@@ -56,7 +56,55 @@ function onItemComposeHandler(event) {
  * send to mail or appointment
  */
 function onItemSendHandler(event) {
-    event.completed({ allowEvent: false, errorMessage:"alert test." });
+    setl10n();
+    let recipients = {};
+    let domains = [];
+    let item = Office.context.mailbox.item;
+
+    if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
+        recipients['to'] = item.requiredAttendees;
+        recipients['cc'] = item.optionalAttendees;
+    } else {
+        recipients['to'] = item.to;
+        recipients['cc'] = item.cc;
+        recipients['bcc'] = item.bcc;
+    }
+
+    // ===== begin of to async ===== //
+    recipients['to'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains  } },
+    (asyncResult) => {
+        let event = asyncResult.asyncContext.callingEvent;
+        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} To`,});
+            return;
+        }
+        getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+        // ===== begin of cc async ===== //
+        recipients['cc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+        (asyncResult) => {
+            let event = asyncResult.asyncContext.callingEvent;
+            if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
+                return;
+            }
+            getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+            if (recipients['bcc']) {
+                // ===== begin of bcc async ===== //
+                recipients['bcc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+                (asyncResult) => {
+                    let event = asyncResult.asyncContext.callingEvent;
+                    if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                        event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} BCC`,});
+                        return;
+                    }
+                    getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+                    diplayMessageBoxExternalDomain(event,domains);
+                }); // ===== end of bcc async ===== //
+            } else {
+                diplayMessageBoxExternalDomain(event,domains);
+            }
+        });// ===== end of cc async ===== //
+    }); // ===== end of to async ===== //
 }
 
 /**
@@ -69,7 +117,7 @@ function setl10n(){
  */
 function diplayMessageBoxExternalDomain(event,domains){
     let diff = [...new Set(domains)].filter(e => !WLDOMAINS.includes(e));
-    let param = diff.length > 0 ? { allowEvent: false, errorMessage: `${l10n.sendToExternal}\n${diff.join("\n")}`,} : { allowEvent: true};
+    let param = diff.length > 0 ? { allowEvent: false, errorMessage: `${Office.context.displayLanguage}\n${l10n.sendToExternal}\n${diff.join("\n")}`,} : { allowEvent: true};
     event.completed(param);
 }
 
