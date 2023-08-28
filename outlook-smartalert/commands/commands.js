@@ -111,6 +111,9 @@ function onItemSendHandler(event) {
  */
 function setl10n(){
     l10n = i18n[Office.context.displayLanguage] ?? i18n['en-US']
+    if (Office.context.displayLanguage==="ko-Kore-KR"){
+        l10n = i18n['ko-KR']
+    }
 }
 
 /**
