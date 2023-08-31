@@ -129,13 +129,13 @@ function getRecipiensDomain(recipients){
 
 function diplayMessageBoxExternalDomain(event,domains){
     let diff = Array.from(new Set(domains)).filter(e => !WLDOMAINS.includes(e));
+    let params;
     if(diff.length > 0){
-        event.completed({ allowEvent: false, errorMessage: `${Office.context.displayLanguage}\nabab\n${diff.join("\n")}`,}); 
+        params = { allowEvent: false, errorMessage: `${Office.context.displayLanguage}\nabab\n${diff.join("\n")}`,}; 
     }else{
-        event.completed({ allowEvent: true});
+        params = { allowEvent: true};
     }
-    
-    
+    event.completed(params);
 }
 
 
