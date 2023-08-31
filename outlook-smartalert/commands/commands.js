@@ -73,7 +73,49 @@ function onItemComposeHandler(event) {
  * applied to a new message or appointment before it's sent.
  * @param {Office.AddinCommands.Event} event The OnMessageSend or OnAppointmentSend event object.
  */
+
 function onItemSendHandler(event) {
+    let recipients = {};
+    let domains = [];
+    let item = Office.context.mailbox.item;
+
+    if (item.itemType === Office.MailboxEnums.ItemType.Appointment) {
+        recipients['to'] = item.requiredAttendees;
+        recipients['cc'] = item.optionalAttendees;
+    } else {
+        recipients['to'] = item.to;
+        recipients['cc'] = item.cc;
+        recipients['bcc'] = item.bcc;
+    }
+
+    let options = {
+        asyncContext: { callingEvent: event, recipients: recipients, domains:domains  }
+    };
+
+    // ===== begin of to async ===== //
+    recipients['to'].getAsync(
+        options,
+        (asyncResult) => {
+            let event = asyncResult.asyncContext.callingEvent;
+            if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                event.completed({ allowEvent: false, errorMessage: `fail!`,});
+                return;
+            }
+
+            getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+
+
+            event.completed({ allowEvent: false, errorMessage: `end${domains.join('\n')}!`,});
+        }); // ===== end of to async ===== //
+}
+
+function getRecipiensDomain(recipients){
+    return recipients.map(e => e.emailAddress.split('@').pop());
+}
+
+
+
+function onItemSendHandler2(event) {
   Office.context.mailbox.item.subject.getAsync(
     { asyncContext: event },
     (asyncResult) => {
@@ -128,6 +170,8 @@ function onItemSendHandler(event) {
     }
   );
 }
+
+
 
 /**
  * Get the property values of existing categories.
