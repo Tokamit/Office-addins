@@ -29,6 +29,20 @@ const WLDOMAINS = [
     "tok.com.sg", 
     "tokgroup.onmicrosoft.com"
 ];
+const i18n = {
+    'ko-KR' : {
+        faildToCheck : '수신자 확인을 실패하였습니다. =>',
+        sendToExternal : '이 메일은 사외로 송신됩니다. 다음의 외부도메인을 확인해주세요',
+    },
+    'en-US' : {
+        faildToCheck : 'Failed to Check Recipients. =>',
+        sendToExternal : 'This mail send to External Domain. Please check to follow external domains.',
+    },
+    'ja-JP' : {
+        faildToCheck : '宛先確認に失敗しました。=>',
+        sendToExternal : '本メールは社外へ送信されます。次の外部ドメインを確認してください。',
+    }
+};
 
 
 /**
