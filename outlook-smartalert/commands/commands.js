@@ -19,6 +19,18 @@ Office.onReady();
   "performance reviews",
 ];
 
+const WLDOMAINS = [
+    "tok.co.jp", 
+    "tokamerica.com", 
+    "tokam.co.kr", 
+    "toktaiwan.com.tw", 
+    "tokchina.com.cn", 
+    "ohka.nl", 
+    "tok.com.sg", 
+    "tokgroup.onmicrosoft.com"
+];
+
+
 /**
  * Handle the OnNewMessageCompose or OnNewAppointmentOrganizer event by verifying that keywords have corresponding
  * color categories when a new message or appointment is created. If no corresponding categories exist, they will be
@@ -105,7 +117,7 @@ function onItemSendHandler(event) {
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
 
 
-            event.completed({ allowEvent: false, errorMessage: `end${domains.join('\n')}!`,});
+            diplayMessageBoxExternalDomain(event,domains);
         }); // ===== end of to async ===== //
 }
 
@@ -113,6 +125,18 @@ function getRecipiensDomain(recipients){
     return recipients.map(e => e.emailAddress.split('@').pop());
 }
 
+
+
+function diplayMessageBoxExternalDomain(event,domains){
+    let diff = [...new Set(domains)].filter(e => !WLDOMAINS.includes(e));
+    if(diff.length > 0){
+        event.completed({ allowEvent: false, errorMessage: `${Office.context.displayLanguage}\n${l10n.sendToExternal}\n${diff.join("\n")}`,}); 
+    }else{
+        event.completed({ allowEvent: true});
+    }
+    
+    
+}
 
 
 function onItemSendHandler2(event) {
