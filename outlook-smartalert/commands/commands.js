@@ -133,7 +133,10 @@ function getRecipiensDomain(recipients){
 /**
  * event handler bind for outlook application
  */
-Office.actions.associate("onMessageComposeHandler", onItemComposeHandler);
-Office.actions.associate("onAppointmentComposeHandler", onItemComposeHandler);
-Office.actions.associate("onMessageSendHandler", onItemSendHandler);
-Office.actions.associate("onAppointmentSendHandler", onItemSendHandler);
+
+if (Office.context.platform === Office.PlatformType.PC || Office.context.platform == null) {
+    Office.actions.associate("onMessageComposeHandler", onItemComposeHandler);
+    Office.actions.associate("onAppointmentComposeHandler", onItemComposeHandler);
+    Office.actions.associate("onMessageSendHandler", onItemSendHandler);
+    Office.actions.associate("onAppointmentSendHandler", onItemSendHandler);
+}
