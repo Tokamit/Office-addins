@@ -53,7 +53,12 @@ const i18n = {
 let l10n = null;
 
 function setl10n(){
-    l10n = i18n[Office.context.displayLanguage] ?? i18n['en-US']
+    //l10n = i18n[Office.context.displayLanguage] ?? i18n['en-US']
+
+    if(i18n[Office.context.displayLanguage] === "undefined"){
+        l10n = i18n['en-US']
+    }
+    
     if (Office.context.displayLanguage==="ko-Kore-KR"){
         l10n = i18n['ko-KR']
     }
