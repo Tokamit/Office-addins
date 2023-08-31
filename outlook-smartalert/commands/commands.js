@@ -30,6 +30,34 @@ const WLDOMAINS = [
     "tokgroup.onmicrosoft.com"
 ];
 
+/**
+ * i18n
+ * base on Office.context.displayLanguage
+ * Refer https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a
+ */
+const i18n = {
+    'ko-KR' : {
+        faildToCheck : '수신자 확인을 실패하였습니다. =>',
+        sendToExternal : '이 메일은 사외로 송신됩니다. 다음의 외부도메인을 확인해주세요',
+    },
+    'en-US' : {
+        faildToCheck : 'Failed to Check Recipients. =>',
+        sendToExternal : 'This mail send to External Domain. Please check to follow external domains.',
+    },
+    'ja-JP' : {
+        faildToCheck : '宛先確認に失敗しました。=>',
+        sendToExternal : '本メールは社外へ送信されます。次の外部ドメインを確認してください。',
+    }
+};
+
+let l10n = null;
+
+function setl10n(){
+    l10n = i18n[Office.context.displayLanguage] ?? i18n['en-US']
+    if (Office.context.displayLanguage==="ko-Kore-KR"){
+        l10n = i18n['ko-KR']
+    }
+}
 
 /**
  * Handle the OnNewMessageCompose or OnNewAppointmentOrganizer event by verifying that keywords have corresponding
@@ -87,6 +115,7 @@ function onItemComposeHandler(event) {
  */
 
 function onItemSendHandler(event) {
+    setl10n();
     let recipients = {};
     let domains = [];
     let item = Office.context.mailbox.item;
