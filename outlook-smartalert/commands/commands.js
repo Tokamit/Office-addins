@@ -100,24 +100,41 @@ function onItemSendHandler(event) {
         recipients['bcc'] = item.bcc;
     }
 
-    let options = {
-        asyncContext: { callingEvent: event, recipients: recipients, domains:domains  }
-    };
-
     // ===== begin of to async ===== //
-    recipients['to'].getAsync(
-        options,
+    recipients['to'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
         (asyncResult) => {
             let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
                 event.completed({ allowEvent: false, errorMessage: `fail!`,});
                 return;
             }
-
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
-
-
-            diplayMessageBoxExternalDomain(event,domains);
+            // ===== begin of cc async ===== //
+            recipients['cc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+            (asyncResult) => {
+                let event = asyncResult.asyncContext.callingEvent;
+                if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                    event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} CC`,});
+                    return;
+                }
+                getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+                if (recipients['bcc']) {
+                    // ===== begin of bcc async ===== //
+                    recipients['bcc'].getAsync({ asyncContext: { callingEvent: event, recipients: recipients, domains:domains } },
+                    (asyncResult) => {
+                        let event = asyncResult.asyncContext.callingEvent;
+                        if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+                            event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} BCC`,});
+                            return;
+                        }
+                        getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
+                        diplayMessageBoxExternalDomain(event,domains);
+                    }); // ===== end of bcc async ===== //
+                } else {
+                    diplayMessageBoxExternalDomain(event,domains);
+                }
+            });// ===== end of cc async ===== //
+            
         }); // ===== end of to async ===== //
 }
 
