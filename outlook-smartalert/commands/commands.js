@@ -139,7 +139,7 @@ function onItemSendHandler(event) {
         (asyncResult) => {
             let event = asyncResult.asyncContext.callingEvent;
             if (asyncResult.status === Office.AsyncResultStatus.Failed) {
-                event.completed({ allowEvent: false, errorMessage: `fail!`,});
+                event.completed({ allowEvent: false, errorMessage: `${l10n.faildToCheck} To`,});
                 return;
             }
             getRecipiensDomain(asyncResult.value).forEach(e=>{domains.push(e)});
@@ -179,6 +179,8 @@ function getRecipiensDomain(recipients){
 
 
 function diplayMessageBoxExternalDomain(event,domains){
+    //let diff = [...new Set(domains)].filter(e => !WLDOMAINS.includes(e));
+    //let param = diff.length > 0 ? { allowEvent: false, errorMessage: `${Office.context.displayLanguage}\n${l10n.sendToExternal}\n${diff.join("\n")}`,} : { allowEvent: true};
     let diff = Array.from(new Set(domains)).filter(e => !WLDOMAINS.includes(e));
     let params;
     if(diff.length > 0){
