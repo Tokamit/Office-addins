@@ -48,8 +48,7 @@ let l10n = null;
  * create new mail or appointment
  */
 function onItemComposeHandler(event) {
-    setl10n();
-    event.completed({ allowEvent: true });
+    event.completed({ allowEvent: false, errorMessage: "New Message!"});
 }
 
 /**
